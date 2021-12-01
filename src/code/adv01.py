@@ -11,7 +11,7 @@ def count_increasing(data: np.ndarray) -> int:
     return (np.diff(data, n=1) > 0).sum()
 
 
-def apply_window(data: list[int], window_size: int) -> int:
+def apply_window(data: np.ndarray, window_size: int) -> np.ndarray:
     return np.convolve(data, np.ones(window_size), mode="valid")
 
 
