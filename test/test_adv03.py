@@ -32,7 +32,13 @@ def test_bit_criteria(data: np.ndarray) -> None:
     assert (mask_oxygen == expected_mask).all()
 
 
-def test_get_rate(data):
+def test_get_rate_oxygen(data):
+    rate = get_rate(data, "oxygen")
+    expected_rate = np.asarray([1, 0, 1, 1, 1], dtype=int)
+    assert (rate == expected_rate).all()
+
+
+def test_get_rate_co2(data):
     rate = get_rate(data, "co2")
     expected_rate = np.asarray([0, 1, 0, 1, 0], dtype=int)
     assert (rate == expected_rate).all()
