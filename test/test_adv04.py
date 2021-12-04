@@ -1,15 +1,16 @@
 import pytest
 import numpy as np
+from src.adv_04 import check_boards_for_winners, run_game
 
 
 @pytest.fixture()
 def drawn_numbers() -> np.ndarray:
     # fmt: off
-    numbers = np.ndarray(
+    numbers = np.asarray(
         [
             7, 4, 9, 5, 11, 17, 23, 2, 0, 14, 21,
             24, 10, 16, 13, 6, 15, 25, 12, 22, 18,
-            20, 8, 19, 3, 26, 1,
+            20, 8, 19, 3, 26, 1
         ],
         dtype=int
     )
@@ -17,6 +18,7 @@ def drawn_numbers() -> np.ndarray:
     return numbers
 
 
+@pytest.fixture()
 def boards() -> np.ndarray:
     # fmt: off
     boards = np.asarray([
@@ -43,5 +45,36 @@ def boards() -> np.ndarray:
     return boards
 
 
+def test_check_boards_for_solutions():
+    observed = np.asarray(
+        [
+            [
+                [False, False, False, False, False],
+                [False, False, False, False, True],
+                [False, False, True, False, False],
+                [True, False, False, False, False],
+                [True, False, False, False, False],
+            ],
+            [
+                [True, True, True, True, True],
+                [False, False, False, False, False],
+                [False, False, False, False, False],
+                [False, False, False, False, False],
+                [False, False, False, False, False],
+            ],
+            [
+                [True, False, True, False, False],
+                [False, False, True, False, False],
+                [False, False, True, False, False],
+                [True, True, True, False, False],
+                [False, False, True, False, False],
+            ],
+        ]
+    )
+    wining_boards = sorted(check_boards_for_winners(observed))
+    assert wining_boards == [1, 2]
+
+
 def test_run_game(boards, drawn_numbers):
-    pass
+    winning_score = run_game(boards, drawn_numbers)
+    assert int(winning_score) == 4512
