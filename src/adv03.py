@@ -14,7 +14,7 @@ def bit_criteria(col: np.ndarray, gas: str) -> np.ndarray:
     # Output sorted accodring to the bit variable
     bit, cnt = np.unique(col, return_counts=True)
     if len(bit) == 1:
-        col_mode = bit.squeeze()[0]
+        col_mode = int(bit.squeeze())
     else:
         col_mode = bit[1] if cnt[1] >= cnt[0] else bit[0]
     if gas == "oxygen":
@@ -50,6 +50,7 @@ if __name__ == "__main__":
     rate_co2_binary = get_rate(data, "co2")
     rate_oxygen_binary = get_rate(data, "oxygen")
     print(f"{rate_co2_binary=}, {rate_oxygen_binary=}")
-    rate_co2, rate_oxygen = int("".join(rate_co2_binary.astype(str)), 2), int(
-        "".join(rate_oxygen_binary.astype(str)), 2
-    )
+    rate_co2 = int("".join(rate_co2_binary.astype(str)), 2)
+    rate_oxygen = int("".join(rate_oxygen_binary.astype(str)), 2)
+    print(f"{rate_co2=}, {rate_oxygen=}")
+    print(f"Answer: {rate_co2 * rate_oxygen}")
