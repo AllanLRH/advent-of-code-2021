@@ -25,11 +25,11 @@ def bit_criteria(col: np.ndarray, gas: str) -> np.ndarray:
 def get_rate(data: np.ndarray, gas: str, col_idx: int = 0) -> int:
     if gas not in ("oxygen", "co2"):
         raise ValueError(f"Invalid gas {gas=}")
-    if data.ndim == 1:
+    if data.squeeze().shape == (1,):
         return data
     mask = bit_criteria(data[:, col_idx], gas)
     print("\t" * (col_idx + 1), (mask.astype(int)))
-    return get_rate(data[mask], gas, col_idx + 1)
+    return get_rate(data[mask, :], gas, col_idx + 1)
 
 
 if __name__ == "__main__":
