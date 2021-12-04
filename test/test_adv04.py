@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.adv_04 import check_boards_for_winners, run_game
+from src.adv04 import check_boards_for_winners, run_game
 
 
 @pytest.fixture()
