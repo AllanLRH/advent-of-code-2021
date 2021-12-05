@@ -19,36 +19,31 @@ def read_data(pth: Path) -> tuple[np.ndarray, np.ndarray]:
     return draws, np.asarray(boards)
 
 
-def check_boards_for_winners(marked_numbers: np.ndarray) -> np.ndarray:
+def check_boards_for_winners(marked_numbers: np.ndarray) -> set[int]:
     full_cols = marked_numbers.all(axis=1)
     full_rows = marked_numbers.all(axis=2)
     full_either = full_cols | full_rows
     if full_either.any():
         board_indices, _ = np.nonzero(full_either)
-        return np.unique(board_indices)
-    return np.array([])
+        return set(board_indices)
+    return set()
 
 
 def run_game(boards: np.ndarray, draws: np.ndarray) -> np.ndarray:
     marked_numbers = np.zeros_like(boards, dtype=bool)
-    scores = list()
+    winners = set()
     for number in draws:
         mask = boards == number
         marked_numbers |= mask
         winning_boards = check_boards_for_winners(marked_numbers)
-        if winning_boards.any():
+        if new_winners := winning_boards - winners:
             # print(f"{winning_boards=}, {number=}")
-            for winner in winning_boards:
+            for winner in new_winners:
                 winboard = boards[winner]
                 winmarked = marked_numbers[winner]
                 score = winboard[~winmarked].sum() * number
-                scores.append(score)
-                # print(f"{winboard=}")
-                # print(f"{winmarked=}")
-                # print(f"{winboard[~winmarked].sum()=}")
-                # print(f"{winboard[~winmarked]=}")
-            return np.asarray(scores)
-    return np.array([])
+                winners.add(winner)
+                yield score
 
 
 if __name__ == "__main__":
@@ -57,5 +52,9 @@ if __name__ == "__main__":
     # print(draws, boards)
 
     # First star
-    answer = run_game(boards, draws)
+    answer_gen = run_game(boards, draws)
+    answer = next(answer_gen)
     print(f"{answer=}")
+
+    for ans in answer_gen:
+        print(ans)

@@ -76,5 +76,5 @@ def test_check_boards_for_solutions():
 
 
 def test_run_game(boards, drawn_numbers):
-    winning_score = run_game(boards, drawn_numbers)
+    winning_score = next(run_game(boards, drawn_numbers))
     assert int(winning_score) == 4512
