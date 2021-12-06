@@ -18,11 +18,27 @@ def read_data(pth: Path) -> np.ndarray:
     return data
 
 
-def is_vertical_or_horizontal(data: np.ndarray) -> np.ndarray:
-    same_x = data[:, 0] == data[:, 1]
-    same_y = data[:, 2] == data[:, 3]
-    same_mask = same_x | same_y
-    return same_mask
+def is_vertical_or_horizontal(coords: np.ndarray) -> bool:
+    x1, y1, x2, y2 = coords
+    return (x1 == x2) | (y1 == y2)
+
+
+def align_coordinates(coords: np.ndarray) -> np.ndarray:
+    def swap_if_wrong_direction(a, b):
+        if a > b:
+            return b, a
+        return a, b
+
+    x1, y1, x2, y2 = coords
+    x1, x2 = swap_if_wrong_direction(x1, x2)
+    y1, y2 = swap_if_wrong_direction(y1, y2)
+    return np.asarray([x1, y1, x2, y2])
+
+
+def is_diagonal(coords: np.ndarray) -> bool:
+    x1, y1, x2, y2 = coords
+    delta_y, delta_x = (y2 - y1), (x2 - x1)
+    return abs(delta_y) == abs(delta_x)
 
 
 def make_simple_map(
@@ -34,16 +50,11 @@ def make_simple_map(
         else map_shape
     )
     seafloor = np.zeros(map_shape, dtype=int)
-    for c1, r1, c2, r2 in data:
-        if c1 == c2 or r1 == r2:
-            cc1, cc2 = (c1, c2 + 1) if c1 < c2 else (c2, c1 + 1)
-            rr1, rr2 = (r1, r2 + 1) if r1 < r2 else (r2, r1 + 1)
-            ind_c, ind_r = np.arange(cc1, cc2), np.arange(rr1, rr2)
-            seafloor[ind_r, ind_c] += 1
-            # print(f"{(cc1, cc2, rr1, rr2)=}")
-        else:
-            continue
-            # print(f"Skipping {(c1, r1)}, {c2, r2}")
+    for row in data:
+        c1, r1, c2, r2 = align_coordinates(row)
+        r_idx = np.arange(r1, r2 + 1, dtype=int)
+        c_idx = np.arange(c1, c2 + 1, dtype=int)
+        seafloor[r_idx, c_idx] += 1
     return seafloor
 
 
@@ -53,7 +64,8 @@ if __name__ == "__main__":
     data = read_data(data_path)
 
     # First star
-    seafloor = make_simple_map(data)
+    straight_lines = np.asarray([row for row in data if is_vertical_or_horizontal(row)])
+    seafloor = make_simple_map(straight_lines)
     answer = (seafloor > 1).sum()
     print(f"{answer=}")
 
