@@ -51,10 +51,10 @@ def make_simple_map(
 if __name__ == "__main__":
     data_path = Path(__file__).parents[1] / "data" / "adv05.txt"
     data = read_data(data_path)
-    # print(a, b)
-    print(data.shape)
-    print(data[:4])
 
     # First star
+    seafloor = make_simple_map(data)
+    answer = (seafloor > 1).sum()
+    print(f"{answer=}")
 
 # %%
