@@ -93,10 +93,10 @@ def test_draw_diagonal_map(data):
         [
             [1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
             [0, 1, 0, 1, 0, 0, 0, 1, 0, 0],
-            [0, 0, 1, 0, 1, 0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+            [0, 0, 0, 1, 0, 2, 0, 1, 0, 0],
+            [0, 0, 0, 0, 2, 0, 2, 0, 0, 0],
             [0, 0, 0, 1, 0, 2, 0, 0, 0, 0],
-            [0, 0, 0, 0, 2, 0, 1, 0, 0, 0],
-            [0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
             [0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
             [0, 1, 0, 0, 0, 0, 0, 1, 0, 0],
             [1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
@@ -105,18 +105,20 @@ def test_draw_diagonal_map(data):
         dtype=int,
     )
     seafloor = SeaFloor(expected.shape)
-    useful_data = np.asarray(
+    diagonals = np.asarray(
         [row for row in data if seafloor.is_diagonal(row)],
         dtype=int,
     )
-    for row in useful_data:
-        print(row)
+    print(seafloor.data)
+    for row in diagonals:
         seafloor.draw_route(row)
-    # print(seafloor.data - expected)
+        print(row)
+        print(seafloor.data)
     try:
         np.testing.assert_equal(seafloor.data, expected)
     except AssertionError:
-        print(seafloor)
+        # print(seafloor)
+        # print(seafloor.data - expected)
         raise
 
 
@@ -138,16 +140,11 @@ def test_draw_complex_map(data):
         dtype=int,
     )
     seafloor = SeaFloor(expected.shape)
-    useful_data = np.asarray(
-        [row for row in data if seafloor.is_diagonal(row)],
-        dtype=int,
-    )
-    for row in useful_data:
-        print(row)
+    for row in data:
         seafloor.draw_route(row)
-    # print(seafloor.data - expected)
     try:
         np.testing.assert_equal(seafloor.data, expected)
     except AssertionError:
         print(seafloor)
+        print(seafloor.data - expected)
         raise

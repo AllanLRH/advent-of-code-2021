@@ -54,20 +54,33 @@ class SeaFloor:
 
     def _draw_diagonal(self, coords) -> None:
         r1, c1, r2, c2 = coords
+        # print(f"{r1=}, {c1=}, {r2=}, {c2=}")
         if r1 < r2:
             if c1 < c2:  # ↘
-                for d in range(r2 - r1):
-                    self.data[c1 + d, r1 + d] += 1
+                # print("↘")
+                for d in range(r2 - r1 + 1):
+                    a, b = c1 + d, r1 + d
+                    # print(f"{a=}, {b=}")
+                    self.data[a, b] += 1
             else:  # ↗
-                for d in range(r2 - r1):
-                    self.data[c1 - d, r1 + d] += 1
+                # print("↗")
+                for d in range(r2 - r1 + 1):
+                    a, b = c1 - d, r1 + d
+                    # print(f"{a=}, {b=}")
+                    self.data[a, b] += 1
         else:  # r1 > r2
             if c1 < c2:  # ↙
-                for d in range(r2 - r1):
-                    self.data[c1 + d, r1 - d] += 1
+                # print("↙")
+                for d in range(r1 - r2 + 1):
+                    a, b = c1 + d, r1 - d
+                    # print(f"{a=}, {b=}")
+                    self.data[a, b] += 1
             else:  # ↖
-                for d in range(r2 - r1):
-                    self.data[c1 - d, r1 - d] += 1
+                # print("↖")
+                for d in range(r1 - r2 + 1):
+                    a, b = c1 - d, r1 - d
+                    # print(f"{a=}, {b=}")
+                    self.data[a, b] += 1
 
     def draw_route(self, coords: np.ndarray) -> None:
         if SeaFloor.is_diagonal(coords):
@@ -124,8 +137,5 @@ if __name__ == "__main__":
     seafloor = SeaFloor(map_shape)
     for row in data:
         seafloor.draw_route(row)
-    answer = (seafloor.data > 2).sum()
+    answer = (seafloor.data > 1).sum()
     print(f"{answer=}")
-
-
-# %%
