@@ -9,53 +9,98 @@ from typing import Optional
 
 def read_data(pth: Path) -> np.ndarray:
     """
+    # Returns an ndarray in the format r1, c1, r2, c2.
     Returns an ndarray in the format c1, r1, c2, r2.
     """
     with pth.open() as fid:
         raw = io.StringIO(fid.read().replace(" -> ", ","))
     data = np.loadtxt(raw, delimiter=",", dtype=int)
-    # return data[:, [0, 2, 1, 3]]
+    # return data[:, [1, 0, 3, 2]]
     return data
 
 
-def is_vertical_or_horizontal(coords: np.ndarray) -> bool:
-    x1, y1, x2, y2 = coords
-    return (x1 == x2) | (y1 == y2)
+def get_map_shape_from_data(data: np.ndarray) -> tuple[int, int]:
+    x = data[:, [0, 2]].max() + 1
+    y = data[:, [1, 3]].max() + 1
+    return (x, y)
+
+
+class SeaFloor:
+    def __init__(self, map_shape: tuple[int, int]) -> None:
+        self.data = np.zeros(map_shape, dtype=int)
+
+    @staticmethod
+    def is_vertical_or_horizontal(coords: np.ndarray) -> bool:
+        r1, c1, r2, c2 = coords
+        return (r1 == r2) | (c1 == c2)
+
+    @staticmethod
+    def is_diagonal(coords: np.ndarray) -> bool:
+        r1, c1, r2, c2 = coords
+        delta_y, delta_x = (c2 - c1), (r2 - r1)
+        return abs(delta_y) == abs(delta_x)
+
+    def _draw_straight(self, coords) -> None:
+        r1, c1, r2, c2 = coords
+        # pointing up or down doesn't matter
+        if r1 == r2:
+            a, b = sorted((c1, c2))
+            idx = np.arange(a, b + 1)
+            self.data[idx, r1] += 1
+        else:
+            a, b = sorted((r1, r2))
+            idx = np.arange(a, b + 1)
+            self.data[c1, idx] += 1
+
+    def _draw_diagonal(self, coords) -> None:
+        r1, c1, r2, c2 = coords
+        if r1 < r2:
+            if c1 < c2:  # ↘
+                for d in range(r2 - r1):
+                    self.data[c1 + d, r1 + d] += 1
+            else:  # ↗
+                for d in range(r2 - r1):
+                    self.data[c1 - d, r1 + d] += 1
+        else:  # r1 > r2
+            if c1 < c2:  # ↙
+                for d in range(r2 - r1):
+                    self.data[c1 + d, r1 - d] += 1
+            else:  # ↖
+                for d in range(r2 - r1):
+                    self.data[c1 - d, r1 - d] += 1
+
+    def draw_route(self, coords: np.ndarray) -> None:
+        if SeaFloor.is_diagonal(coords):
+            self._draw_diagonal(coords)
+        elif SeaFloor.is_vertical_or_horizontal(coords):
+            self._draw_straight(coords)
+        else:
+            raise ValueError(f"Not a straigh line or a diagonal {coords=}")
+
+    def __repr__(self) -> str:
+        return repr(self.data)
 
 
 def align_coordinates(coords: np.ndarray) -> np.ndarray:
+    """
+    Swap coordinates to make everything point the same way
+    """
+
     def swap_if_wrong_direction(a, b):
         if a > b:
             return b, a
         return a, b
 
-    x1, y1, x2, y2 = coords
-    x1, x2 = swap_if_wrong_direction(x1, x2)
-    y1, y2 = swap_if_wrong_direction(y1, y2)
-    return np.asarray([x1, y1, x2, y2])
+    r1, c1, r2, c2 = coords
+    r1, r2 = swap_if_wrong_direction(r1, r2)
+    c1, c2 = swap_if_wrong_direction(c1, c2)
+    return np.asarray([r1, c1, r2, c2])
 
 
 def is_diagonal(coords: np.ndarray) -> bool:
-    x1, y1, x2, y2 = coords
-    delta_y, delta_x = (y2 - y1), (x2 - x1)
+    r1, c1, r2, c2 = coords
+    delta_y, delta_x = (c2 - c1), (r2 - r1)
     return abs(delta_y) == abs(delta_x)
-
-
-def make_simple_map(
-    data: np.ndarray, map_shape: Optional[tuple[int, int]] = None
-) -> np.ndarray:
-    map_shape = (
-        (data[:, :2].max() + 1, data[:, 2:].max() + 1)
-        if map_shape is None
-        else map_shape
-    )
-    seafloor = np.zeros(map_shape, dtype=int)
-    for row in data:
-        c1, r1, c2, r2 = align_coordinates(row)
-        r_idx = np.arange(r1, r2 + 1, dtype=int)
-        c_idx = np.arange(c1, c2 + 1, dtype=int)
-        seafloor[r_idx, c_idx] += 1
-    return seafloor
 
 
 # %% script_part
@@ -63,10 +108,24 @@ if __name__ == "__main__":
     data_path = Path(__file__).parents[1] / "data" / "adv05.txt"
     data = read_data(data_path)
 
+    map_shape = get_map_shape_from_data(data)
+
     # First star
-    straight_lines = np.asarray([row for row in data if is_vertical_or_horizontal(row)])
-    seafloor = make_simple_map(straight_lines)
-    answer = (seafloor > 1).sum()
+    seafloor = SeaFloor(map_shape)
+    straight_lines = np.asarray(
+        [row for row in data if seafloor.is_vertical_or_horizontal(row)]
+    )
+    for row in straight_lines:
+        seafloor.draw_route(row)
+    answer = (seafloor.data > 1).sum()
     print(f"{answer=}")
+
+    # Second star
+    seafloor = SeaFloor(map_shape)
+    for row in data:
+        seafloor.draw_route(row)
+    answer = (seafloor.data > 2).sum()
+    print(f"{answer=}")
+
 
 # %%

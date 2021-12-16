@@ -1,12 +1,6 @@
 import pytest
 import numpy as np
-import textwrap
-from src.adv05 import (
-    make_simple_map,
-    is_vertical_or_horizontal,
-    is_diagonal,
-    align_coordinates,
-)
+from src.adv05 import SeaFloor, get_map_shape_from_data
 
 
 @pytest.fixture()
@@ -30,7 +24,9 @@ def data() -> np.ndarray:
 
 def test_simple_map_draw_straight():
     coords = np.asarray([[0, 5, 4, 5], [1, 5, 3, 5], [3, 1, 3, 4]])
-    seafloor = make_simple_map(coords, map_shape=(6, 6))
+    seafloor = SeaFloor(map_shape=(6, 6))
+    for row in coords:
+        seafloor.draw_route(row)
     expected = np.asarray(
         [
             [0, 0, 0, 0, 0, 0],
@@ -42,30 +38,30 @@ def test_simple_map_draw_straight():
         ],
         dtype=int,
     )
-    assert seafloor.sum() > 0
-    assert (seafloor == expected).all()
-
-
-def test_align_coordinates():
-    data = np.asarray([1, 10, 3, 4])
-    aligned = align_coordinates(data)
-    expected = np.asarray([1, 4, 3, 10])
-    assert (aligned == expected).all()
+    assert seafloor.data.sum() > 0
+    try:
+        np.testing.assert_equal(seafloor.data, expected)
+    except AssertionError:
+        print(seafloor.data)
+        raise
 
 
 def test_is_vertical_or_horizontal():
     data = np.asarray([[0, 1, 0, 1], [0, 1, 0, 2], [0, 1, 2, 1], [1, 2, 3, 4]])
-    h_or_v = [is_vertical_or_horizontal(coords) for coords in data]
+    seafloor = SeaFloor((1, 1))
+    h_or_v = [seafloor.is_vertical_or_horizontal(coords) for coords in data]
     assert h_or_v == [True, True, True, False]
 
 
 def test_is_diagonal():
     data = np.asarray([[0, 0, 3, 3], [3, 3, 0, 0], [4, 4, 2, 6], [0, 0, 3, 4]])
-    is_diag = [is_diagonal(coors) for coors in data]
+    seafloor = SeaFloor((1, 1))
+    is_diag = [seafloor.is_diagonal(coords) for coords in data]
     assert is_diag == [True, True, True, False]
 
 
-def test_draw_simple_map(data):
+# @pytest.mark.skip("Not implemented yet")
+def test_draw_straight_map(data):
     expected = np.asarray(
         [
             [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
@@ -81,6 +77,77 @@ def test_draw_simple_map(data):
         ],
         dtype=int,
     )
-    straight_lines = np.asarray([row for row in data if is_vertical_or_horizontal(row)])
-    seafloor = make_simple_map(straight_lines)
-    assert (seafloor == expected).all()
+    map_shape = get_map_shape_from_data(data)
+    seafloor = SeaFloor(map_shape)
+    straight_lines = np.asarray(
+        [row for row in data if seafloor.is_vertical_or_horizontal(row)]
+    )
+    for row in straight_lines:
+        seafloor.draw_route(row)
+    np.testing.assert_equal(seafloor.data, expected)
+
+
+# @pytest.mark.skip("Not implemented yet")
+def test_draw_diagonal_map(data):
+    expected = np.asarray(
+        [
+            [1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+            [0, 1, 0, 1, 0, 0, 0, 1, 0, 0],
+            [0, 0, 1, 0, 1, 0, 1, 0, 0, 0],
+            [0, 0, 0, 1, 0, 2, 0, 0, 0, 0],
+            [0, 0, 0, 0, 2, 0, 1, 0, 0, 0],
+            [0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 1, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ],
+        dtype=int,
+    )
+    seafloor = SeaFloor(expected.shape)
+    useful_data = np.asarray(
+        [row for row in data if seafloor.is_diagonal(row)],
+        dtype=int,
+    )
+    for row in useful_data:
+        print(row)
+        seafloor.draw_route(row)
+    # print(seafloor.data - expected)
+    try:
+        np.testing.assert_equal(seafloor.data, expected)
+    except AssertionError:
+        print(seafloor)
+        raise
+
+
+# @pytest.mark.skip("Not implemented yet")
+def test_draw_complex_map(data):
+    expected = np.asarray(
+        [
+            [1, 0, 1, 0, 0, 0, 0, 1, 1, 0],
+            [0, 1, 1, 1, 0, 0, 0, 2, 0, 0],
+            [0, 0, 2, 0, 1, 0, 1, 1, 1, 0],
+            [0, 0, 0, 1, 0, 2, 0, 2, 0, 0],
+            [0, 1, 1, 2, 3, 1, 3, 2, 1, 1],
+            [0, 0, 0, 1, 0, 2, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 1, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+            [2, 2, 2, 1, 1, 1, 0, 0, 0, 0],
+        ],
+        dtype=int,
+    )
+    seafloor = SeaFloor(expected.shape)
+    useful_data = np.asarray(
+        [row for row in data if seafloor.is_diagonal(row)],
+        dtype=int,
+    )
+    for row in useful_data:
+        print(row)
+        seafloor.draw_route(row)
+    # print(seafloor.data - expected)
+    try:
+        np.testing.assert_equal(seafloor.data, expected)
+    except AssertionError:
+        print(seafloor)
+        raise
